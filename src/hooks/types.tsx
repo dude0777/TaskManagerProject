@@ -1,0 +1,17 @@
+// types.ts
+export interface Task {
+    id?: string; // Optional because it's added by Firebase
+    title: string;
+    description: string;
+    status: string|number;
+    dueDate: string | null;
+    fileURL: string | null;
+    tags: string[];
+    activities: Activity[];
+    userId?: string;
+  }
+  
+  export interface Activity {
+    name: string;
+    time: string;
+  }

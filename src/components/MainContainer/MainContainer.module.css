@@ -1,0 +1,14 @@
+.mainContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 92%;
+    margin: auto;
+  }
+  
+  @media screen and (min-width: 1024px) {
+    .mainContainer {
+      width: 98%; /* Adjust width for larger screens */
+    }
+  }
+  

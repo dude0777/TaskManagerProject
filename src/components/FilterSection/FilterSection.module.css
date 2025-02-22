@@ -1,0 +1,72 @@
+/* FilterSection.module.css */
+
+.filterSection {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  
+  .topRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.25rem;
+  }
+  
+  .addTaskButton {
+    background-color: #7b1984;
+    color: white;
+    border-radius: 25px;
+    padding: 0.8rem 2.1rem;
+  }
+  
+  .filterContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin: auto;
+  }
+  
+  .filterLabel {
+    padding-inline: 0.5rem;
+  }
+  
+  .filtersRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .mobileSearchRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+   
+    width: 100%;
+  }
+  @media screen and (min-width: 1024px) {
+    .filterSection {
+      flex-direction: row-reverse;
+     
+       
+    }
+  
+    .filterContainer {
+   
+      flex-direction: row;
+      
+      align-items: center; 
+    }
+  
+  .mobileSearchRow{
+    display: none;
+  }
+  }
+  
+  

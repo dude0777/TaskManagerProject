@@ -1,0 +1,33 @@
+/* components/BackgroundCircles/BackgroundCircles.module.css */
+.circlesContainer {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  .mobileSvg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .desktopSvg {
+    position: absolute;
+    top: 66%;
+    left: 67%;
+    transform: translate(-50%, -50%);
+    width: 1000px;
+    height: 907px;
+    z-index: -100;
+    overflow: hidden;
+  }
+  
+  /* Update your existing Login.module.css to ensure proper content positioning */
+  .container {
+    position: relative;
+    z-index: 1;
+  }

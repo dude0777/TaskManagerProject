@@ -1,0 +1,112 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+}
+
+.contentContainer {
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  flex-direction: column;
+  width: 82%;
+}
+
+.imgStyles {
+  display: none; /* Hidden by default for mobile */
+}
+
+.header {
+  display: flex;
+  color: #7b1984;
+  justify-content: center;
+  align-items: center;
+}
+
+.taskIcon {
+  margin-right: 0.5rem;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 0.7rem;
+}
+
+.description {
+  font-size: 0.7rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.loginButton {
+  display: flex;
+  background-color: #000;
+  gap: 1rem;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  width: clamp(90%, 300px, 854px);
+  max-width: 400px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.loginButton:hover {
+  background-color: #333;
+}
+
+/* Desktop styles */
+@media screen and (min-width: 1024px) {
+  .container {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .imgStyles {
+   height: 88vh;
+   width:50vw;
+   display:inline-block;
+    position: relative;
+    z-index: 1;
+
+  }
+
+  .contentContainer {
+    justify-content: flex-start; 
+    align-items: flex-start;
+    flex-direction: column;
+    padding-inline-start: 7rem;
+  }
+
+  .header {
+    font-size: 1.5rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .description {
+    font-size: 1.1rem;
+    text-align: left;
+    margin-bottom: 2rem;
+  }
+
+  .loginButton {
+    height: 60px;
+    font-size: 1.2rem;
+  }
+}
