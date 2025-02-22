@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "taskmanagerapp-d4680"
+  },
+  "targets": {
+    "taskmanagerapp-d4680": {
+      "hosting": {
+        "default": "hosting",
+        "dataconnect": "dataconnect"
+      }
+    }
+  }
+}
