@@ -1,34 +1,19 @@
 import FilterSection from "../FilterSection/FilterSection";
 import TableComponent from "../TableComponent/TableComponent";
-import styles from "./MainContainer.module.css"; // Import CSS module
-import { useFetchTasks } from "../../hooks/useFetchTasks"; // Import the custom hook
-import { useAuth } from "../../hooks/useAuth";
-import { useEffect } from "react";
+import BoardComponent from "../BoardComponent/BoardComponent";
+import styles from "./MainContainer.module.css"; 
+import UpdateTask from "../UpdateTask/UpdateTask";
+import BatchUpdateContainer from "../BatchUpdateComponent/BatchUpdateComponent";
+import { useTaskManagement } from "../../hooks/useTaskManagement ";
 const MainContainer = () => {
-    const { user } = useAuth();
-  // Fetch tasks using the custom hook
-  const { data: tasks, isLoading, isError } = useFetchTasks(user?.uid||'');
-
-  // Log the fetched tasks to the console
-  useEffect(() => {
-    if (tasks) {
-      console.log("Fetched tasks:", tasks);
-    }
-  }, [tasks]);
-
-  // Log loading and error states
-  if (isLoading) {
-    console.log("Loading tasks...");
-  }
-
-  if (isError) {
-    console.error("Error fetching tasks");
-  }
-
+const {tab}=useTaskManagement();
   return (
     <div className={styles.mainContainer}>
       <FilterSection />
-      <TableComponent />
+      { tab==='list' && <> <TableComponent />
+      <BatchUpdateContainer />  </>}
+      <UpdateTask />
+     { tab==='board'&&<BoardComponent />}
     </div>
   );
 };

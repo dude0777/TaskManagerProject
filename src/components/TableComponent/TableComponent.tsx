@@ -1,78 +1,65 @@
-import React, { useState } from 'react';
-import {
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Typography,
-} from '@mui/material';
-import { useWindowSize } from "../../hooks/useWindowSize";
-
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-interface TableData {
-   
-    taskName: string;
-    dueOn:string;
-    taskCategory: string;
-
-    
-    description: string;
-    taskStatus: string;
-}
-
+import React from "react";
+import { useFetchTasks } from "../../hooks/useFetchTasks";
+import { useAuth } from "../../hooks/useAuth";
+import TableSection from "../TableSection/TableSection";
+import { useTaskManagement } from "../../hooks/useTaskManagement ";
+import dayjs from "dayjs";
+import Loader from "../Loader/Loader";
 
 const TableComponent: React.FC = () => {
-    const { isMobile } = useWindowSize();
-    // Sample data - replace with your actual data
-    const data: TableData[] = [
-        { id: 1, name: 'Task 1', description: 'Description 1', status: 'Active' },
-        { id: 2, name: 'Task 2', description: 'Description 2', status: 'Pending' },
-        { id: 3, name: 'Task 3', description: 'Description 3', status: 'Completed' },
-    ];
+  const { user } = useAuth();
+  const { data: tasks, isLoading, error } = useFetchTasks(user?.uid || "");
+  const { searchValue, category, dueDate } = useTaskManagement();
 
-    return (
-        <Accordion>
-            <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1a-content"
-                id="panel1a-header"
-            >
-                <TableHead>
-                            <TableRow>
-                                <TableCell>ID</TableCell>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Description</TableCell>
-                                <TableCell>Status</TableCell>
-                            </TableRow>
-                        </TableHead>
-                <Typography>Task Table</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-                <TableContainer component={Paper}>
-                    <Table aria-label="simple table">
-                        
-                        <TableBody>
-                            {data.map((row) => (
-                                <TableRow key={row.id}>
-                                    <TableCell>{row.id}</TableCell>
-                                    <TableCell>{row.name}</TableCell>
-                                    <TableCell>{row.description}</TableCell>
-                                    <TableCell>{row.status}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </AccordionDetails>
-        </Accordion>
-    );
+  if (isLoading) return <Loader />;
+  if (error) return <p>Error loading tasks: {error.message}</p>;
+
+
+  const filteredTasks = (tasks || []).filter((task) => {
+    const matchesSearch = searchValue
+      ? ((task.title && task.title.toLowerCase().includes(searchValue.toLowerCase())) ||
+         (task.description && task.description.toLowerCase().includes(searchValue.toLowerCase())))
+      : true;
+
+    const matchesDueDate = dueDate
+      ? task.dueDate && dayjs(task.dueDate).isSame(dayjs(dueDate), "day")
+      : true;
+
+    const matchesCategory = category ? task.status === category : true;
+
+    return matchesSearch && matchesDueDate && matchesCategory;
+  });
+
+
+  const completedTasks = filteredTasks.filter((task) => task.status === "Completed");
+  const pendingTasks = filteredTasks.filter((task) => task.status === "New");
+  const inProgressTasks = filteredTasks.filter((task) => task.status === "In Progress");
+
+  return (
+    <div style={{ width: "100%", marginTop: "2rem" }}>
+      <TableSection
+        title="Todo"
+        sectionStatus="New"
+        tasks={pendingTasks}
+        accordionColor="#FBAFE5"
+        addButtonNeeded={true}
+      />
+      <TableSection
+        title="In-progress Tasks"
+        sectionStatus="In Progress"
+        tasks={inProgressTasks}
+        accordionColor="#8BCEE4"
+        addButtonNeeded={false}
+      />
+      <TableSection
+        title="Completed Tasks"
+        sectionStatus="Completed"
+        tasks={completedTasks}
+        accordionColor="#CEFFCC"
+        addButtonNeeded={false}
+      />
+    </div>
+  );
 };
 
 export default TableComponent;

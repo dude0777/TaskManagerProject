@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
-
+import Loader from './components/Loader/Loader';
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
@@ -12,7 +12,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     console.log('ProtectedRoute - User:', user, 'Loading:', loading);
   
     if (loading) {
-      return <div>Loading...</div>;
+      return <Loader />;
     }
   
     if (!user) {

@@ -14,14 +14,10 @@
     align-items: center;
     justify-content: flex-end;
     gap: 1.25rem;
+    margin-top: 1rem;
   }
   
-  .addTaskButton {
-    background-color: #7b1984;
-    color: white;
-    border-radius: 25px;
-    padding: 0.8rem 2.1rem;
-  }
+
   
   .filterContainer {
     display: flex;
@@ -29,11 +25,12 @@
     align-items: flex-start;
     width: 100%;
     margin: auto;
+    gap: 1rem;
   }
   
-  .filterLabel {
+  /* .filterLabel {
     padding-inline: 0.5rem;
-  }
+  } */
   
   .filtersRow {
     display: flex;
@@ -53,6 +50,9 @@
   @media screen and (min-width: 1024px) {
     .filterSection {
       flex-direction: row-reverse;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0rem;
      
        
     }

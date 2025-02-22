@@ -3,9 +3,11 @@ import { AuthProvider } from "./store/AuthProvider";
 import { ProtectedRoute } from "./ProtectedRoute";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login/Login";
+import { TaskManagementProvider } from "./store/TaskManagementProvider";
 
 const App = () => {
   return (
+    <TaskManagementProvider>
     <AuthProvider>
       <Router>
         <Routes>
@@ -21,6 +23,7 @@ const App = () => {
         </Routes>
       </Router>
     </AuthProvider>
+    </TaskManagementProvider>
   );
 };
 

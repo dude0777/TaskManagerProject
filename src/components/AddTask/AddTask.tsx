@@ -2,12 +2,11 @@ import * as React from "react";
 import { useState } from "react";
 import { Global } from "@emotion/react";
 import { SelectChangeEvent } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { grey } from "@mui/material/colors";
 import { Close } from "@mui/icons-material";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import { Chip, Stack, TextField } from "@mui/material"; // Import TextField and IconButton
+import Dialog from "@mui/material/Dialog";
+import { Chip, Stack, TextField } from "@mui/material";
 import CustomTextField from "../CustomTextField/CustomTextField";
 import CustomDatePicker from "../CustomDatePicker";
 import CustomSelect from "../CustomSelect/CustomSelect";
@@ -15,6 +14,11 @@ import { Dayjs } from "dayjs";
 import { uploadFileToCloudinary } from "../../utils/uploadFileToCloudinary";
 import { useAddTask } from "../../hooks/useAddTask";
 import { useAuth } from "../../hooks/useAuth";
+import { useWindowSize } from "../../hooks/useWindowSize";
+import styles from "./AddTask.module.css";
+import RichTextEditor from "../RichTextEditor/RichTextEditor";
+import Loader from "../Loader/Loader";
+
 const drawerBleeding = 56;
 
 interface Props {
@@ -22,35 +26,31 @@ interface Props {
   toggleDrawer: (newOpen: boolean) => void;
 }
 
-const Root = styled("div")(({ theme }) => ({
-  height: "100%",
-  backgroundColor: grey[100],
-  ...theme.applyStyles("dark", {
-    backgroundColor: theme.palette.background.default,
-  }),
-}));
-
 const CreateTask: React.FC<Props> = ({ open, toggleDrawer }) => {
   const [taskType, setTaskType] = useState<"work" | "personal">("work");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [dueDate, setDueDate] = useState<Dayjs | null>(null);
-  const [taskStatus, setTaskStatus] = useState<string|number>("");
+  const [taskStatus, setTaskStatus] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [fileURL, setFileURL] = useState<string | null>(null);
-  const [tags, setTags] = useState<string[]>([]); 
-  const [tagInput, setTagInput] = useState(""); 
-  const [errors, setErrors] = useState<{[key: string]: boolean}>({
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: boolean }>({
     title: false,
     status: false,
-    dueDate: false
+    dueDate: false,
   });
-  const { user } = useAuth();
 
-  const addTaskMutation = useAddTask(user?.uid||'');
+  const isMobile = useWindowSize().isMobile;
+  const { user } = useAuth();
+  const addTaskMutation = useAddTask(user?.uid || "");
+
   const handleDateChange = (date: Dayjs | null) => {
     setDueDate(date);
+    setErrors({ ...errors, dueDate: date === null });
   };
+
   const handleCreateTask = async () => {
     if (!validateForm()) return;
 
@@ -69,11 +69,9 @@ const CreateTask: React.FC<Props> = ({ open, toggleDrawer }) => {
         },
       ],
     };
-  
+
     try {
       await addTaskMutation.mutateAsync(newTask);
-      
-      // Reset form and close drawer
       resetForm();
       toggleDrawer(false);
     } catch (error) {
@@ -89,57 +87,74 @@ const CreateTask: React.FC<Props> = ({ open, toggleDrawer }) => {
     setDueDate(null);
     setFileURL(null);
     setTags([]);
+    setTagInput("");
     setErrors({
       title: false,
       status: false,
-      dueDate: false
+      dueDate: false,
     });
   };
+
   const handleStatusChange = (event: SelectChangeEvent<string | number>) => {
-    setTaskStatus(event.target.value as string);
+    setTaskStatus(event.target.value.toString());
+    setErrors({ ...errors, status: event.target.value.toString() === "" });
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setIsUploading(true);
-
       try {
-        const fileUrl = await uploadFileToCloudinary(selectedFile); // Call the utility function
-        setFileURL(fileUrl); // Set the file URL for preview
+        const fileUrl = await uploadFileToCloudinary(selectedFile);
+        setFileURL(fileUrl);
       } catch (error) {
         console.error("Error uploading file:", error);
       } finally {
         setIsUploading(false);
       }
-
-      // Reset the file input value
       e.target.value = "";
     }
   };
 
-  const handleDivClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleDivClick = () => {
     const fileInput = document.getElementById("file-input");
     if (fileInput) {
-      fileInput.click(); // Trigger the file input when the div is clicked
+      fileInput.click();
     }
   };
 
   const handleRemoveFile = () => {
-    setFileURL(null); // Reset the file URL state
+    setFileURL(null);
   };
 
-  // Function to handle adding a tag
   const handleAddTag = () => {
-    if (tagInput.trim() !== "") {
-      setTags([...tags, tagInput.trim()]); // Add the new tag to the list
-      setTagInput(""); // Clear the input field
+    if (tagInput.trim() !== "" && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput("");
     }
   };
 
-  // Function to handle deleting a tag
   const handleDeleteTag = (tagToDelete: string) => {
-    setTags(tags.filter((tag) => tag !== tagToDelete)); // Remove the tag from the list
+    setTags(tags.filter((tag) => tag !== tagToDelete));
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTaskTitle(e.target.value);
+    setErrors({ ...errors, title: e.target.value.trim() === "" });
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      title: taskTitle.trim() === "",
+      status: taskStatus === "",
+      dueDate: dueDate === null,
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error);
+  };
+
+  const isCreateDisabled = () => {
+    return taskTitle.trim() === "" || taskStatus === "" || dueDate === null;
   };
 
   const menuItems = [
@@ -147,343 +162,220 @@ const CreateTask: React.FC<Props> = ({ open, toggleDrawer }) => {
     { value: "In Progress", label: "In Progress" },
     { value: "Completed", label: "Completed" },
   ];
-  const validateForm = () => {
-    const newErrors = {
-        taskType: taskType.trim() === '',
-      status: taskStatus === '',
-      dueDate: dueDate === null
-    };
-    setErrors(newErrors);
-    return !Object.values(newErrors).some(error => error);
-  };
-  const isCreateDisabled = () => {
-    return Object.values(errors).some(error => error) || 
-           taskType.trim() === '' || 
-           taskStatus === '' || 
-           dueDate === null;
-  };
-  return (
-    <Root>
-      <CssBaseline />
-      <Global
-        styles={{
-          ".MuiDrawer-root > .MuiPaper-root": {
-            height: `calc(90% - ${drawerBleeding}px)`,
-            overflow: "visible",
-            borderRadius: "20px",
-          },
-        }}
-      />
 
-      <SwipeableDrawer
-        anchor="bottom"
-        open={open}
-        onClose={() => toggleDrawer(false)}
-        onOpen={() => toggleDrawer(true)}
-        swipeAreaWidth={drawerBleeding}
-        disableSwipeToOpen={false}
-        ModalProps={{
-          keepMounted: true,
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            overflow: "auto",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "1.1rem",
-              }}
-            >
-              <p style={{ fontSize: "1.5rem" }}>Create Task</p>
-              <Close onClick={() => toggleDrawer(false)} />
-            </div>
-            <div>
-              <hr />{" "}
-            </div>
+  const formContent = (
+    <div className={styles.contentContainer}>
+      <div className={styles.header}>
+        <p className={styles.headerTitle}>Create Task</p>
+        <Close onClick={() => toggleDrawer(false)} />
+      </div>
+
+      <div className={styles.formSection}>
+        <CustomTextField
+          borderRadius="10px"
+          label="Task Title"
+          value={taskTitle}
+          onChange={handleTitleChange}
+          width="100%"
+        />
+
+        <RichTextEditor
+          label="Description"
+          value={taskDescription}
+          onChange={(newDescription) => setTaskDescription(newDescription)}
+        />
+
+        <div className={isMobile ? styles.inputGroup : styles.desktopInputRow}>
+          <div className={styles.chipContainer}>
+            <p className={styles.label}>Task Category*</p>
+            <Stack direction="row" spacing={2}>
+              <Chip
+                sx={{
+                  backgroundColor:
+                    taskType === "work" ? "#7B1984" : "transparent",
+                  color: taskType === "work" ? "white" : "black",
+                  borderColor: "#7B1984",
+                  padding: "1rem 1.5rem",
+                  "&:hover": {
+                    backgroundColor:
+                      taskType === "work" ? "#6A1570" : "rgba(0,0,0,0.08)",
+                  },
+                }}
+                label="Work"
+                clickable
+                variant={taskType === "work" ? "filled" : "outlined"}
+                onClick={() => setTaskType("work")}
+              />
+              <Chip
+                variant={taskType === "personal" ? "filled" : "outlined"}
+                sx={{
+                  backgroundColor:
+                    taskType === "personal" ? "#7B1984" : "transparent",
+                  color: taskType === "personal" ? "white" : "black",
+                  borderColor: "#7B1984",
+                  padding: "1rem 1.3rem",
+                  "&:hover": {
+                    backgroundColor:
+                      taskType === "personal" ? "#6A1570" : "rgba(0,0,0,0.08)",
+                  },
+                }}
+                label="Personal"
+                clickable
+                onClick={() => setTaskType("personal")}
+              />
+            </Stack>
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              flexDirection: "column",
-            }}
-          >
-            <div
-              style={{
-                padding: "0.5rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-              }}
-            >
-              <CustomTextField
-                borderRadius="10px"
-                label="Task Title"
-                value={taskTitle}
-                onChange={(e) => setTaskTitle(e.target.value)}
-                width="100%"
-              />
-              <CustomTextField
-                borderRadius="10px"
-                multiline={true}
-                label="Description"
-                value={taskDescription}
-                onChange={(e) => setTaskDescription(e.target.value)}
-                width="100%"
-              />
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "0.7rem",
-                  flexDirection: "column",
-                }}
-              >
-                <p style={{ fontWeight: "500", color: "#56595c" }}>
-                  Task Category*
-                </p>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  justifyContent="flex-start"
-                  alignItems="center"
-                >
-                  <Chip
-                    sx={{
-                      backgroundColor:
-                        taskType === "work" ? "#7B1984" : "transparent",
-                      color: taskType === "work" ? "white" : "black",
-                      borderColor: "#7B1984",
-                      padding: "1rem 1.5rem 1rem 1.5rem",
-                      "&:hover": {
-                        backgroundColor:
-                          taskType === "work" ? "#6A1570" : "rgba(0,0,0,0.08)",
-                      },
-                    }}
-                    label="Work"
-                    clickable
-                    variant={taskType === "work" ? "filled" : "outlined"}
-                    onClick={() => setTaskType("work")}
-                  />
-                  <Chip
-                    variant={taskType === "personal" ? "filled" : "outlined"}
-                    sx={{
-                      backgroundColor:
-                        taskType === "personal" ? "#7B1984" : "transparent",
-                      color: taskType === "personal" ? "white" : "black",
-                      borderColor: "#7B1984",
-                      padding: "1rem 1.3rem 1rem  1.3rem",
-                      "&:hover": {
-                        backgroundColor:
-                          taskType === "personal"
-                            ? "#6A1570"
-                            : "rgba(0,0,0,0.08)",
-                      },
-                    }}
-                    label="Personal"
-                    clickable
-                    onClick={() => setTaskType("personal")}
-                  />
-                </Stack>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "0.4rem",
-                  flexDirection: "column",
-                }}
-              >
-                <p style={{ fontWeight: "500", color: "#56595c" }}>Due on*</p>
-                <CustomDatePicker
-                  value={dueDate}
-                  onChange={handleDateChange}
-                  width="75%"
-                  borderRadius="10px"
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "0.4rem",
-                  flexDirection: "column",
-                }}
-              >
-                <p style={{ fontWeight: "500", color: "#56595c" }}>
-                  Task Status*
-                </p>
-                <CustomSelect
-                  value={taskStatus}
-                  onChange={handleStatusChange}
-                  width="75%"
-                  borderRadius="10px"
-                  menuItems={menuItems}
-                  placeholder="Choose"
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "0.4rem",
-                  flexDirection: "column",
-                }}
-              >
-                <p style={{ fontWeight: "500", color: "#56595c" }}>Tags</p>
-                <TextField
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyUp={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddTag();
-                    }
-                  }}
-                  placeholder="Add a tag and press Enter"
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                />
-                <Stack direction="row" spacing={1} style={{ flexWrap: "wrap" }}>
-                  {tags.map((tag, index) => (
-                    <Chip
-                      key={index}
-                      label={tag}
-                      onDelete={() => handleDeleteTag(tag)}
-                      style={{ margin: "4px" }}
-                    />
-                  ))}
-                </Stack>
-              </div>
-              <div
-                onClick={handleDivClick}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "1rem",
-                  flexDirection: "column",
-                }}
-              >
-                <p style={{ fontWeight: "500", color: "#56595c" }}>
-                  Attachment
-                </p>
-                <div
-                  style={{
-                    backgroundColor: "#F1F1F1",
-                    padding: "0.5rem 1rem",
-                    borderRadius: "10px",
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <p style={{ color: "#9E9E9E" }}>
-                    Drop your files here or <a href="">Upload</a>{" "}
-                  </p>
-                </div>
-                <input
-                  id="file-input"
-                  type="file"
-                  style={{ display: "none" }}
-                  onChange={handleFileChange}
-                />
-              </div>
 
-              {/* File Preview Section */}
-              {fileURL && (
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "1rem",
-                    border: "1px solid #ddd",
-                    borderRadius: "10px",
-                    padding: "1rem",
-                  }}
-                >
-                  <img
-                    src={fileURL}
-                    alt="File Preview"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "200px",
-                      borderRadius: "10px",
-                    }}
-                  />
-                  <Close
-                    style={{
-                      position: "absolute",
-                      top: "0.5rem",
-                      right: "0.5rem",
-                      backgroundColor: "rgba(0, 0, 0, 0.5)",
-                      color: "white",
-                      borderRadius: "50%",
-                      padding: "0.25rem",
-                      cursor: "pointer",
-                    }}
-                    onClick={handleRemoveFile}
-                  />
-                </div>
-              )}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                backgroundColor: "#F1F1F1",
-                bottom: "0",
-                padding: "2.5rem 1rem 1rem 1rem",
-                marginTop: "2rem",
-                gap: "0.5rem",
-              }}
-            >
-                <button
-                    onClick={() => {
-                        resetForm();
-                        toggleDrawer(false);
-                      }}
-                style={{
-                  backgroundColor: "transparent",
-                  color: "#7B1984",
-                  padding: "1rem 2.7rem 1rem  2.7rem",
-                  border: "1px solid #7B1984",
-                  borderRadius: "25px",
-                  cursor: "pointer",
-                  marginLeft: "1rem",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-              disabled={isCreateDisabled()}
-               onClick={handleCreateTask} 
-               style={{
-                backgroundColor: isCreateDisabled() ? "#C0C0C0" : "#7B1984",
-                color: "white",
-                padding: "1rem 2.7rem 1rem 2.7rem",
-                border: "none",
-                borderRadius: "25px",
-                cursor: isCreateDisabled() ? "not-allowed" : "pointer",
-                opacity: isCreateDisabled() ? 0.5 : 1,
-              }}
-              >
-                Create
-              </button>
-              
-            </div>
+          <div className={styles.inputGroup}>
+            <p className={styles.label}>Due on*</p>
+            <CustomDatePicker
+              value={dueDate}
+              onChange={handleDateChange}
+              borderRadius="10px"
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <p className={styles.label}>Task Status*</p>
+            <CustomSelect
+              value={taskStatus}
+              onChange={handleStatusChange}
+              borderRadius="10px"
+              menuItems={menuItems}
+              placeholder="Choose"
+            />
           </div>
         </div>
-      </SwipeableDrawer>
-    </Root>
+
+        <div className={styles.tagSection}>
+          <p className={styles.label}>Tags</p>
+          <TextField
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyUp={(e) => {
+              if (e.key === "Enter") {
+                handleAddTag();
+              }
+            }}
+            placeholder="Add a tag and press Enter"
+            fullWidth
+            variant="outlined"
+            size="small"
+          />
+          <div className={styles.tagChips}>
+            {tags.map((tag, index) => (
+              <Chip
+                key={index}
+                label={tag}
+                onDelete={() => handleDeleteTag(tag)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.attachmentSection} onClick={handleDivClick}>
+          <p className={styles.label}>Attachment</p>
+          <div className={styles.dropZone}>
+            <p className={styles.dropZoneText}>
+            Drop your files here or <span className={styles.uploadLink}>Upload</span>
+            </p>
+          </div>
+          <input
+            id="file-input"
+            type="file"
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+        </div>
+
+        {fileURL && (
+          <div className={styles.filePreview}>
+            <img
+              src={fileURL}
+              alt="File Preview"
+              className={styles.previewImage}
+            />
+            <Close
+              className={styles.removeFileButton}
+              onClick={handleRemoveFile}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className={styles.actionButtons}>
+        <button
+          onClick={() => {
+            resetForm();
+            toggleDrawer(false);
+          }}
+          className={styles.cancelButton}
+        >
+          Cancel
+        </button>
+        <button
+          disabled={isCreateDisabled()}
+          onClick={handleCreateTask}
+          className={`${styles.createButton} ${
+            isCreateDisabled() ? styles.createButtonDisabled : ""
+          }`}
+        >
+          Create
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={styles.root}>
+      <CssBaseline />
+      {isUploading  &&  <Loader />}
+      {isMobile ? (
+        <>
+          <Global
+            styles={{
+              ".MuiDrawer-root.MuiDrawer-modal .MuiDrawer-paper": {
+                height: `calc(100% - ${drawerBleeding}px)`,
+                borderRadius: "20px 20px 0 0",
+              },
+            }}
+          />
+          <SwipeableDrawer
+            anchor="bottom"
+            open={open}
+            onClose={() => toggleDrawer(false)}
+            onOpen={() => toggleDrawer(true)}
+            swipeAreaWidth={drawerBleeding}
+            disableSwipeToOpen={false}
+            ModalProps={{
+              keepMounted: true,
+            }}
+            sx={{
+              "& .MuiDrawer-paper": {
+                height: `calc(80% - ${drawerBleeding}px)`,
+                borderRadius: "20px 20px 0 0",
+              },
+            }}
+          >
+            {formContent}
+          </SwipeableDrawer>
+        </>
+      ) : (
+        <Dialog
+          open={open}
+          onClose={() => toggleDrawer(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            style: {
+              borderRadius: "20px",
+            },
+          }}
+        >
+          {formContent}
+        </Dialog>
+      )}
+    </div>
   );
 };
 

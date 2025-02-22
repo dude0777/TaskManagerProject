@@ -1,24 +1,32 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { SelectChangeEvent } from "@mui/material/Select";
 import CustomSelect from "../CustomSelect/CustomSelect";
 import CustomDatePicker from "../CustomDatePicker";
 import { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import SearchIcons from "@mui/icons-material/Search";
 import CustomTextField from "../CustomTextField/CustomTextField";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { Button } from "@mui/material";
-import styles from "./FilterSection.module.css"; // Import the CSS module
+import styles from "./FilterSection.module.css";
 import AddTask from "../AddTask/AddTask";
+import { useTaskManagement } from "../../hooks/useTaskManagement ";
 const FilterSection = () => {
-  const [age, setAge] = useState<string | number>("");
-  const [dueDate, setDueDate] = useState<Dayjs | null>(null);
-  const [searchValue, setSearchValue] = useState<string>("");
   const { isMobile } = useWindowSize();
   const [open, setOpen] = useState<boolean>(false);
+  const {
+    category,
+    setCategory,
+    dueDate,
+    setDueDate,
+    searchValue,
+    setSearchValue,
+  } = useTaskManagement();
+
   const toggleDrawer = (newOpen: boolean) => {
     setOpen(newOpen);
-  }
+  };
 
   const handleSearchChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -27,18 +35,29 @@ const FilterSection = () => {
   };
 
   const handleDateChange = (date: Dayjs | null) => {
-    setDueDate(date);
+    // Store the date as an ISO string or null
+    setDueDate(date ? date.toISOString() : null);
   };
 
   const handleChange = (event: SelectChangeEvent<string | number>) => {
-    setAge(event.target.value);
+    setCategory(event.target.value as string);
   };
 
+  // Function to reset all filters
+  const resetFilters = () => {
+    setCategory("");
+    setDueDate(null);
+    setSearchValue("");
+  };
+
+  // Check if any filter is applied
+  const isFilterApplied = category || dueDate || searchValue;
+
   const menuItems = [
-    { value: 10, label: "Ten" },
-    { value: 20, label: "Twenty" },
-    { value: 30, label: "Thirty" },
-    { value: 40, label: "Forty" },
+    { value: "", label: "" },
+    { value: "New", label: "New" },
+    { value: "In Progress", label: "In Progress" },
+    { value: "Completed", label: "Completed" },
   ];
 
   return (
@@ -56,37 +75,53 @@ const FilterSection = () => {
           />
         )}
         <Button
-        onClick={() => toggleDrawer(true)}
+          onClick={() => toggleDrawer(true)}
           sx={{
             backgroundColor: "#7B1984",
             color: "white",
             borderRadius: "25px",
-            minWidth:'9rem',
-            padding: "0.8rem 2.1rem 0.8rem 2.1rem",
+            minWidth: "9rem",
+            padding: "0.8rem 2.1rem",
           }}
         >
           ADD TASK
         </Button>
       </div>
       <div className={styles.filterContainer}>
-        <p className={styles.filterLabel}>Filter by:</p>
+        <div className={styles.filterLabel}>Filter by:</div>
         <div className={styles.filtersRow}>
           <CustomSelect
-            value={age}
+            value={category}
             onChange={handleChange}
-            width="120px"
+            width="130px"
             borderRadius="25px"
             menuItems={menuItems}
             placeholder="categories"
           />
           <CustomDatePicker
-            value={dueDate}
+            value={dueDate ? dayjs(dueDate) : null}
             label="Due Date"
             width="153px"
             borderRadius="25px"
             onChange={handleDateChange}
             endAdornmentIcon={<KeyboardArrowDownIcon />}
           />
+          {/* Conditionally render the "Remove Filters" button */}
+          {isFilterApplied && (
+            <button
+              onClick={resetFilters}
+              style={{
+                backgroundColor: "#FF6B6B",
+                color: "white",
+                borderRadius: "25px",
+          
+                padding: "0.6rem 0.8rem",
+                marginLeft: "1rem",
+              }}
+            >
+          X
+            </button>
+          )}
         </div>
       </div>
       <div className={styles.mobileSearchRow}>

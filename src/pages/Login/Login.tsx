@@ -8,6 +8,7 @@ import GoogleIcon from "../../assets/GoogleIcon";
 import BackgroundCircles from "../../components/BackgroundCircles/BackgroundCircles";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import TaskList  from '../../assets/Task list view 3.png'
+import Loader from "../../components/Loader/Loader";
 const LoginPage = () => {
   const { user, loading, login } = useAuth();
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const LoginPage = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   return ( <>
