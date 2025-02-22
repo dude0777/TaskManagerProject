@@ -6,13 +6,13 @@ import UpdateTask from "../UpdateTask/UpdateTask";
 import BatchUpdateContainer from "../BatchUpdateComponent/BatchUpdateComponent";
 import { useTaskManagement } from "../../hooks/useTaskManagement ";
 const MainContainer = () => {
-const {tab}=useTaskManagement();
+const {tab,enableEditing}=useTaskManagement();
   return (
     <div className={styles.mainContainer}>
       <FilterSection />
       { tab==='list' && <> <TableComponent />
-      <BatchUpdateContainer />  </>}
-      <UpdateTask />
+    <div style={{position:'absolute',bottom:'30px'}}> <BatchUpdateContainer /> </div>  </>}
+   { enableEditing&&  <UpdateTask />}
      { tab==='board'&&<BoardComponent />}
     </div>
   );

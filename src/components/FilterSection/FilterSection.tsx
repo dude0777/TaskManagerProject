@@ -137,7 +137,7 @@ const FilterSection = () => {
           />
         )}
       </div>
-      <AddTask open={open} toggleDrawer={toggleDrawer} />
+   {  open && <AddTask open={open} toggleDrawer={toggleDrawer} />}
     </div>
   );
 };
